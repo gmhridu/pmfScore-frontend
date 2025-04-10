@@ -25,8 +25,23 @@ export const useGenerateScore = <
 
       return response.data;
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["score", data?._id] });
+    onSuccess: async (data) => {
+      const id = data.data._id;
+      const queryKey = ["score", id];
+
+      queryClient.setQueryData(queryKey, data);
+
+      await queryClient.prefetchQuery({
+        queryKey,
+        queryFn: async () => {
+          const res = await axios.get<TResponseData>(
+            `https://pmfscore-backend-production.up.railway.app/api/v1/score/${id}`
+          );
+
+          const { data } = res;
+          return data;
+        },
+      });
     },
   });
 
